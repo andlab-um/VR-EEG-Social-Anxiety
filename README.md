@@ -28,10 +28,11 @@
 │   ├── AddPortEEG.py      # load the PortEEG function 
 │   ├── UnityCallPython.cs # script for importing python script in unity
 │   └── inpoutx64.dll      # dll for parallel ports
+├── data                   # preprocessed behavioral and EEG data
 ├── 1_behav_all_figs.qmd   # visualization of the behavioral results
 ├── 2_ISC_EEG_new.ipynb    # intersubejct simialrity analysis of the EEG data
 ├── 3_ISC_behav.ipynb      # intersubejct simialrity analysis of the preprocessed behav data
-├── 4_ISRSA.ipynb          # intersubject representational similarity analysis 
+├── 4_ISRSA.ipynb          # intersubject representational similarity analysis
 ├── LICENSE
 └── README.md
 ```
