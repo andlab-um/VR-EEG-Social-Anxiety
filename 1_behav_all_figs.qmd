@@ -1,0 +1,608 @@
+---
+title: "getting individual's estimate of affect/valence/arousal"
+format: html
+editor: visual
+---
+
+#loading the packeges
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library (ggplot2)
+library(RColorBrewer)
+library(reshape2)
+library(tidyverse)
+library(dplyr)
+library(circlize)
+library(leaps)
+library(ggpubr)
+library(ggstatsplot) # for box-plots with statistics
+library(knitr)       # beautifying tables
+library(ggsci) #colors
+library(gridExtra)
+library(NatParksPalettes)    # beautifying tables
+```
+
+#pe_abs_cue_affect_grid
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("new_cue_37.csv")%>%
+  select(-pe, cue)
+#colnames(a) <- c('Arousal', 'Valence', 'Expectation', 'Cue', 'sub')
+
+```
+
+```{r}
+#smooth
+pic <- ggplot(a, aes(x=pe_abs, y=value))+ 
+  facet_grid(Affect~Cue)+
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  scale_colour_manual(values = c("#CB171D", "#2D74AC"))+
+  geom_point(aes(fill = Cue), size = 2.5, alpha =0.7, shape = 21, color = 1)+ 
+  geom_smooth(aes(fill = Cue, colour = Cue), method = 'lm', se = F, size= 1,
+              fullrange = F, alpha = 0.3, show.legend = FALSE)+
+  theme_bw()+
+  #stat_cor(data=a, method = "spearman", show.legend=FALSE)+
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = 'none',
+        legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="Cue",y="Affect")
+pic
+#ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/pe_abs_cue_affect_grid.png", width = 8, height = 8)
+
+```
+
+#new sociability & ECG ISRSA with the behavirl model estimates
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+data <- read.csv('new_high_low_rsa.csv',header = T)%>%
+  select(-aff_pe_low, -aff_pe_high,-aff_cue_low, -aff_cue_high, -hrvsd)
+#colnames(data) <- c('ar_pe_low', 'ar_pe_high', "ar_cue_low", 'ar_cue_high', 'va_pe_low', 'va_pe_high', 'va_cue_low', 'va_cue_high','aff_pe_low', 'aff_pe_high', 'aff_cue_low', 'aff_cue_high',"EC", "PD", "SO", "SS", "hrvm", "hrvsd")
+#write.csv(data,file = "~/Desktop/Emotional_Volatility/for_isrsa/new_high_low_rsa.csv",row.names = F)
+
+#data <- read.csv('est_isc_33.csv',header = T)
+library(GGally)
+a <- ggcorr(data,label = TRUE, label_size = 3, label_round = 2, label_alpha = FALSE,
+            nbreaks =11,
+            method = c("all.obs", "spearman"))
+a
+ggsave(a, filename = "~/Desktop/Emotional_Volatility/fig3/corr_rdm_4.21.png", width = 10, height = 10)
+
+```
+
+#pop out the signifcant ones
+
+```{r}
+pic <- ggplot(data, aes(x=PD, y = va_cue_high))+ 
+  #scale_colour_manual(values=natparks.pals("BryceCanyon", 4))+
+  geom_point(size = 1.5, alpha = 0.6, color = '#E09891')+ 
+  geom_smooth(method = 'lm', se = F, color = '#C1726B')+
+  stat_cor(data = data, method = "pearson", 
+           show.legend = FALSE)+ #remove the a
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = 'none',
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    legend.title = element_text(size=12), #change legend title font size
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="SO",y="Valence on Cue(low volatility)")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/so_va_cue_high.png", 
+       width = 4, height = 4)
+```
+
+#beta estimates, 3-way ANOVA #estimates of cue
+
+```{r}
+#a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/high_low_est.csv")
+a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/new_estimate_1.csv")%>%
+  filter(Predictors == "Cue")%>%
+  filter(Affect != "Affect")
+a$est_z <- a$est%>%scale()
+  
+pic <- ggplot(data = a, 
+              aes(x = Volatility, y = est, fill = Affect)) +
+  geom_point(aes(x = Volatility, y = est, color = Affect), 
+             position=position_jitterdodge(jitter.width = 0.08, dodge.width = 0.7), size = 1, alpha = 0.6) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0.8, size = 0.8)+
+  geom_hline(yintercept = 0, linetype="dashed",  size=0.4)+
+  scale_fill_manual(values = c("#82709A", "#87A96D"))+
+  scale_colour_manual(values = c("#82709A", "#87A96D"))+
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = "none",
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=10, color = "black"),
+    axis.title.x=element_text(size=10),
+    axis.title.y=element_text(size=10), 
+    strip.text.x = element_text(size = 10),
+    legend.box.background = element_rect(color = NA))+
+  guides(color=guide_legend(title = "Volatility"))+
+  #scale_y_continuous(limits = c(-0.5,1.5) )+ #坐标轴刻度标签和范围
+  labs(title ="", x="Volatility",y="Model estimates of cue")+
+  theme(text = element_text(family = "Helvetica"))
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/est_cue.png", 
+       width = 4, height = 4)
+
+```
+
+#estimates of PE
+
+```{r}
+a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/new_estimate_1.csv")%>%
+  filter(Predictors == "PE")%>%
+  filter(Affect != "Affect")
+a$est_z <- a$est%>%scale()
+  
+pic <- ggplot(data = a, 
+              aes(x = Volatility, y = est, fill = Affect)) +
+  geom_point(aes(x = Volatility, y = est, color = Affect), 
+             position=position_jitterdodge(jitter.width = 0.08, dodge.width = 0.7), size = 1, alpha = 0.6) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0.8, size = 0.8)+
+  geom_hline(yintercept = 0, linetype="dashed",  size=0.4)+
+  scale_fill_manual(values = c("#82709A", "#87A96D"))+
+  scale_colour_manual(values = c("#82709A", "#87A96D"))+
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = "none",
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=10, color = "black"),
+    axis.title.x=element_text(size=10),
+    axis.title.y=element_text(size=10), 
+    strip.text.x = element_text(size = 10),
+    legend.box.background = element_rect(color = NA))+
+  guides(color=guide_legend(title = "Volatility"))+
+  #scale_y_continuous(limits = c(-0.5,1.5) )+ #坐标轴刻度标签和范围
+  labs(title ="", x="Volatility",y="Model estimates of PE")+
+  theme(text = element_text(family = "Helvetica"))
+pic
+
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/est_pe.png", width = 4, height = 4)
+
+```
+
+##valence&arousal bar graph by volatility
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/") 
+a <- read.csv('4.24_interaction.csv')%>%
+  select(arousal, valence, Volatility)
+
+colnames(a) <- c('Arousal', 'Valence', 'Volatility')
+
+b <- melt(data = a,id.vars=c("Volatility"),variable.name="Affect",
+          value.name="values")
+
+dodge <- position_dodge(width=.8)
+pbar <- ggplot(b, aes(x = Affect, y = values, 
+                      fill = factor(Volatility, level = c('low', 'medium', 'high'))))+
+  #adding bars
+  stat_summary(fun=mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.8, position = dodge, alpha = 0.75, colour = 1, size = 0)+
+  stat_summary(fun.data = 'mean_se', geom = "errorbar",
+               width = 0.15, position = position_dodge( .8), size = 0.4)+
+  scale_fill_manual(values = c("#D3D0CB", "#72A2BF", "#33658A"))+
+  scale_colour_manual(values = c("#D3D0CB", "#72A2BF", "#33658A"))+
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+        panel.background=element_blank(), axis.line=element_line(color="black"),)+
+  theme(legend.position='none')+
+  coord_cartesian(ylim = c(30, 75)) +# scales of y
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    legend.title = element_text(size=12), #change legend title font size
+    legend.text = element_text(size=12),
+    legend.direction = 'vertical', #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="Affect",y="Score")+
+  guides(color=guide_legend(title = "Volatility"))
+ggsave(pbar, filename = "~/Desktop/Emotional_Volatility/fig3/4.24volatility_bar.png", 
+       width = 4, height = 4)
+pbar
+
+
+```
+
+```{r}
+####
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("forfig.csv")%>%
+  select(-pe)
+colnames(a) <- c('Arousal', 'Valence', 'Expectation', 'Cue', 'sub')
+a <- melt(data = a,id.vars=c("sub", "Cue"),variable.name="ratings",value.name="values")
+
+dodge <- position_dodge(width=.8)
+pbar <- ggplot(a, aes(x = ratings, y = values, 
+                      fill = Cue))+
+  #adding bars
+  stat_summary(fun=mean, geom = "bar",
+               fun.args = list(mult = 1), width = 0.8, position = dodge, alpha = 0.65, colour = 1, size = 0)+
+  stat_summary(fun.data = 'mean_se', geom = "errorbar",
+               width = 0.15, position = position_dodge( .8), size = 0.4)+
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  #scale_fill_brewer(palette = "Paired") +
+  # scale_colour_brewer(palette = "Paired") +
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+        panel.background=element_blank(), axis.line=element_line(color="black"),)+
+  theme(legend.position=c(0.75,0.9))+
+  coord_cartesian(ylim = c(20, 75)) +# scales of y
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    legend.title = element_text(size=12), #change legend title font size
+    legend.text = element_text(size=12),
+    legend.direction = 'vertical', #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="Rating items",y="Score")+
+  guides(color=guide_legend(title = "Cue"))
+ggsave(pbar, filename = "~/Desktop/Emotional_Volatility/fig3/value_cue_box_4.24.png", 
+       width = 4, height = 4)
+pbar
+
+```
+
+#behaviral measures ISC and the trait ISC
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+data <- read.csv('behav_isc_37.csv',header = T)
+#colnames(data) <- c('ar_pe_low', 'ar_pe_high', "ar_cue_low", 'ar_cue_high', 'va_pe_low', 'va_pe_high', 'va_cue_low', 'va_cue_high','aff_pe_low', 'aff_pe_high', 'aff_cue_low', 'aff_cue_high',"EC", "PD", "SO", "SS", "hrvm", "hrvsd")
+#write.csv(data,file = "~/Desktop/Emotional_Volatility/for_isrsa/new_high_low_rsa.csv",row.names = F)
+
+#data <- read.csv('est_isc_33.csv',header = T)
+library(GGally)
+a <- ggcorr(data,label = FALSE, label_size = 3, label_round = 2, label_alpha = TRUE,
+            nbreaks =11,
+            method = c("all.obs", "spearman"))
+a
+ggsave(a, filename = "~/Desktop/Emotional_Volatility/fig3/corr_rsm_4.21.png", width = 6, height = 6)
+
+```
+
+#pop out the signifcant ones
+
+```{r}
+pic <- ggplot(data, aes(x=SO, y = Arousal))+ 
+  #scale_colour_manual(values=natparks.pals("BryceCanyon", 4))+
+  geom_point(size = 1.5, alpha = 0.6, color = '#E09891')+ 
+  geom_smooth(method = 'lm', se = F, color = '#C1726B')+
+  stat_cor(data = data, method = "spearman", 
+           show.legend = FALSE)+ #remove the a
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = 'none',
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    legend.title = element_text(size=12), #change legend title font size
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="SO similarity",y="Arousal similarity")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/so_ar_isrsa.png", 
+       width = 4, height = 4)
+```
+
+#interaction analysis for the behaviral models
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("4.24_interaction.csv")
+pic <- ggplot(a, aes(x=pe, y=resi_ar),
+              color = Cue, fill = Cue)+ 
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  scale_colour_manual(values = c("#CB171D", "#2D74AC"))+
+  geom_point(aes(fill = Cue, colour = Cue), size = 1, alpha =0.5)+ 
+  geom_smooth(aes(fill = Cue, colour = Cue), method = 'lm', se = T, linewidth= 1,
+              fullrange = F, alpha = 0.3, show.legend = FALSE)+
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+       legend.position = 'none',
+        legend.direction = 'vertical', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="PE",y="Arousal")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/4.24_ar_interaction.png", width = 4, height = 4)
+
+
+
+```
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("4.24_interaction.csv")
+pic <- ggplot(a, aes(x = pe, y = resi_va),
+               color = factor(Volatility, level = c('low', 'medium', 'high')),  fill = factor(Volatility, level = c('low', 'medium', 'high')))+ 
+  scale_fill_manual(values = c("#D3D0CB", "#33658A", "#2F4858"))+
+  scale_colour_manual(values = c("#D3D0CB","#33658A", "#2F4858"))+
+  geom_point(aes(color = factor(Volatility, level = c('low', 'medium', 'high')),  fill = factor(Volatility, level = c('low', 'medium', 'high'))), size = 1, alpha =0.5)+ 
+  geom_smooth(aes(color = factor(Volatility, level = c('low', 'medium', 'high')),  fill = factor(Volatility, level = c('low', 'medium', 'high'))), method = 'lm', se = T, linewidth= 1,
+              fullrange = F, alpha = 0.3, show.legend = FALSE)+
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = 'none',
+        legend.direction = 'vertical', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  labs(title ="", x="PE",y="Valence")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/4.24_va_interaction_6.png", width = 4, height = 4)
+
+
+
+```
+
+#5.10: interaction of volatility & cue on arousal, line graph
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/") 
+#reg <- read.csv('new_cue_vola_37_melt.csv')%>% select(arousal, valence, Volatility)
+#a <- melt(reg, na.rm = FALSE, value.name = 'affect', id = 'Volatility')
+#write.csv(a,file = "~/Desktop/Emotional_Volatility/for_isrsa/melted_affect.csv",row.names = F)
+a <- read.csv('melted_affect_5.10.csv')
+pic <- ggplot(data = a, 
+              aes(x = factor(Volatility, level = c('low', 'medium', 'high')),
+                  y = value, color = Cue,group = Cue )) +
+  geom_line(size = 1) +
+  geom_point(aes(y = value, color = Cue),size = 3)+
+  geom_errorbar(aes(ymin=value - se, ymax=value + se, width=.2),size = 1)+
+  #introdataviz::geom_flat_violin(position = position_nudge(x = 0.2, y = 0), alpha = 0.5) +
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  scale_colour_manual(values = c("#CB171D", "#2D74AC"))+
+  # custom colours and theme
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = 'none',
+        legend.direction = 'vertical', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    legend.title = element_text(size=12), #change legend title font size
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  #coord_cartesian(ylim = c(-65, 100)) +# scales of y
+  labs(title ="", x="Volatility",y="Arousal")+
+  theme(text = element_text(family = "Helvetica"))
+#ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/5.10_interaction_arousal.png",width = 4, height = 4)
+pic
+```
+
+#5.10: interaction of PE&Cue&Reward on valence
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("cue_vola_reward_37.csv")%>%filter(reward == 1)
+pic <- ggplot(a, aes(x=pe, y=valence),
+              color = Cue, fill = Cue)+ 
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  scale_colour_manual(values = c("#CB171D", "#2D74AC"))+
+  stat_cor(data = a%>%filter(Cue == "happy"), method = "pearson", label.y = 100)+
+  stat_cor(data = a%>%filter(Cue == "sad"), method = "pearson", label.y = 0.8)+
+  geom_point(aes(fill = Cue, colour = Cue), size = 1, alpha =0.5)+ 
+  geom_smooth(aes(fill = Cue, colour = Cue), method = 'lm', se = T, linewidth= 1,
+              fullrange = F, alpha = 0.3, show.legend = FALSE)+
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+       legend.position = 'none',
+        legend.direction = 'vertical', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+    #coord_cartesian(xlim = c(-65, 80)) +# scales of y
+  labs(title ="", x="PE",y="Valence")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/6.20_interaction_va_1.png", width = 4, height = 4)
+
+
+
+```
+
+#5.10: interaction of PE&Cue&Reward on arousal
+
+```{r}
+setwd("~/Desktop/Emotional_Volatility/for_isrsa/")
+a <- read.csv("cue_vola_reward_37.csv")%>%filter(reward == 0)
+pic <- ggplot(a, aes(x=pe, y=arousal),
+              color = Cue, fill = Cue)+ 
+  scale_fill_manual(values = c("#CB171D", "#2D74AC"))+
+  scale_colour_manual(values = c("#CB171D", "#2D74AC"))+
+ geom_point(aes(fill = Cue, colour = Cue), size = 1, alpha =0.5)+ 
+  geom_smooth(aes(fill = Cue, colour = Cue), method = 'lm', se = T, linewidth= 1,
+              fullrange = F, alpha = 0.3, show.legend = FALSE)+
+    stat_cor(data = a%>%filter(Cue == "happy"), method = "pearson",label.y = 100)+
+  stat_cor(data = a%>%filter(Cue == "sad"), method = "pearson", label.y = 0.8)+
+  theme_classic()+
+  theme(panel.grid.major.y = element_blank(),
+       legend.position = 'none',
+        legend.direction = 'vertical', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+    #coord_cartesian(xlim = c(-65, 80)) +# scales of y
+  labs(title ="", x="PE",y="Arousal")
+pic
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/6.20_interaction_ar_0.png", width = 4, height = 4)
+
+
+
+```
+
+#5.12 estimates plots #beta estimates, 3-way ANOVA #estimates of cue
+
+```{r}
+#a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/high_low_est.csv")
+a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/5.10_estimates.csv")%>%
+  filter(Predictors == "Cue")
+a$est_z <- a$est%>%scale()
+  
+pic <- ggplot(data = a, 
+              aes(x = Volatility, y = est, fill = Affect)) +
+  geom_point(aes(x = Volatility, y = est, color = Affect), 
+             position=position_jitterdodge(jitter.width = 0.08, dodge.width = 0.7), size = 1, alpha = 0.6) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0.8, size = 0.8)+
+  geom_hline(yintercept = 0, linetype="dashed",  size=0.4)+
+  scale_fill_manual(values = c("#82709A", "#87A96D"))+
+  scale_colour_manual(values = c("#82709A", "#87A96D"))+
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = "none",
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  guides(color=guide_legend(title = "Volatility"))+
+  scale_y_continuous(limits = c(-10,100) )+ #坐标轴刻度标签和范围
+  labs(title ="", x="Volatility",y="Model estimates of cue")+
+  theme(text = element_text(family = "Helvetica"))
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/5.10_est_cue.png", 
+       width = 4, height = 4)
+
+pic
+```
+
+#estimates of reward
+
+```{r}
+#a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/high_low_est.csv")
+a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/5.10_estimates.csv")%>%
+  filter(Predictors == "Reward")
+a$est_z <- a$est%>%scale()
+  
+pic <- ggplot(data = a, 
+              aes(x = Volatility, y = est, fill = Affect)) +
+  geom_point(aes(x = Volatility, y = est, color = Affect), 
+             position=position_jitterdodge(jitter.width = 0.08, dodge.width = 0.7), size = 1, alpha = 0.6) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0.8, size = 0.8)+
+  geom_hline(yintercept = 0, linetype="dashed",  size=0.4)+
+  scale_fill_manual(values = c("#82709A", "#87A96D"))+
+  scale_colour_manual(values = c("#82709A", "#87A96D"))+
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = "none",
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  guides(color=guide_legend(title = "Volatility"))+
+  scale_y_continuous(limits = c(-10,100) )+ #坐标轴刻度标签和范围
+  labs(title ="", x="Volatility",y="Model estimates of reward")+
+  theme(text = element_text(family = "Helvetica"))
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/5.10_est_re.png", 
+       width = 4, height = 4)
+
+pic
+```
+
+#estimates of PE
+
+```{r}
+a <- read.csv("~/Desktop/Emotional_Volatility/for_isrsa/5.10_estimates.csv")%>%
+  filter(Predictors == "PE")
+a$est_z <- a$est%>%scale()
+  
+pic <- ggplot(data = a, 
+              aes(x = Volatility, y = est, fill = Affect)) +
+  geom_point(aes(x = Volatility, y = est, color = Affect), 
+             position=position_jitterdodge(jitter.width = 0.08, dodge.width = 0.7), size = 1, alpha = 0.6) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0.8, size = 0.8)+
+  geom_hline(yintercept = 0, linetype="dashed",  size=0.4)+
+  scale_fill_manual(values = c("#82709A", "#87A96D"))+
+  scale_colour_manual(values = c("#82709A", "#87A96D"))+
+  theme_classic() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = "none",
+        #legend.direction = 'horizontal', 
+        legend.background = element_rect(fill = "white", color = "white"))+
+  theme(#plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+    axis.text=element_text(size=14, color = "black"),
+    axis.title.x=element_text(size=18),
+    axis.title.y=element_text(size=18), 
+    strip.text.x = element_text(size = 18),
+    strip.text.y = element_text(size = 18),#change grid font
+    legend.text = element_text(size=12), #change legend text font size
+    legend.box.background = element_rect(color = NA))+
+  guides(color=guide_legend(title = "Volatility"))+
+  scale_y_continuous(limits = c(-0.4,0.5) )+ #坐标轴刻度标签和范围
+  labs(title ="", x="Volatility",y="Model estimates of PE")+
+  theme(text = element_text(family = "Helvetica"))
+
+ggsave(pic, filename = "~/Desktop/Emotional_Volatility/fig3/5.10_est_pe.png", width = 4, height = 4)
+
+pic
+
+```
