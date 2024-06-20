@@ -1,4 +1,4 @@
-# Negative_Emotion_Neurophysio_IS-RSA
+# VR-EEG-Social-Anxiety
 * This repo mainly contains scripts for processing multimodal neurophysiological data from the VR emotion project. 
 * Data modality: EEG (Brain Porduct 64 ch, montage see *BP_Montage*), ECG (BIOPAC 3 leads)
 * Paradigm: naturalistic viewing of negative emotinal videos under virtual reality (Unity + Steam VR)
