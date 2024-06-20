@@ -6,10 +6,14 @@
 
 
 ## Highlights
-* We combined virtual reality & simultaneous EEG-ECG recording to probe the neurophysiological responses of negative emotions
-* We used those recordings as individualistic neural features, which can predict their affective patterns during social interaction
-* Furthermore, individual variation of affection generation during social interaction could be captured by neurophysiological responses
-* Virtual reality has promising utility in naturalistic neuroimaging and socio-affective research to create real-life-like experiences in laboratory settings
+* We combined virtual reality & simultaneous EEG-ECG recording to probe the neurophysiological responses of negative emotions, which can be considered as individualistic neural features which can predict individuals’ affective patterns during social interaction
+
+* We found that individual differences in generating emotions during social interactions can be detected through neurophysiological responses. Individuals who shared similar neural patterns during VR-induced anxiety shared a similar effect of cue on their affective experience during social interaction.
+
+* The results also suggested that controlling for other factors, social reward holds a unique contribution to the anxiety component of individuals' mixed affective experience.
+
+* Virtual reality proved to be a valuable tool in creating realistic social and emotional experiences within controlled laboratory settings. This enhances the naturalism of neuroimaging and socio-affective research, which provides deeper insights into human behavior and affection.
+
 
 
 ## Description
