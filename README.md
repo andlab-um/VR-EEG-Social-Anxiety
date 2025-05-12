@@ -4,7 +4,6 @@
 > From [Affective, Neuroscience, and Decision-making Lab](https://andlab-um.com)
 
 
-
 ## Highlights
 * We combined virtual reality & simultaneous EEG-ECG recording to probe the neurophysiological responses of negative emotions, which can be considered as individualistic neural features which can predict individuals’ affective patterns during social interaction
 
@@ -67,4 +66,17 @@ ggpubr
 knitr
 circlize
 leaps
+```
+## References
+Hu, K., Wang, R., Zhao, S., Yin, E., & Wu, H. (2024). The association between social rewards and anxiety: Links from neurophysiological analysis in virtual reality and social interaction game. *NeuroImage*, 299, 120846. https://doi.org/10.1016/j.neuroimage.2024.120846
+
+```@article{hu2024association,
+  title={The association between social rewards and anxiety: Links from neurophysiological analysis in virtual reality and social interaction game},
+  author={Hu, Keyu and Wang, Ruien and Zhao, Shaokai and Yin, Erwei and Wu, Haiyan},
+  journal={NeuroImage},
+  volume={299},
+  pages={120846},
+  year={2024},
+  publisher={Elsevier}
+}
 ```
